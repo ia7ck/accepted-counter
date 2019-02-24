@@ -166,7 +166,7 @@ const AcceptedCounter = {
       let [sum_data, ac_data, cf_data] = [timeline, this.ac_timeline, this.cf_timeline].map((tl) => (get_chart_data(get_acc_sum_array(tl))));
       if (datatype === "sum" || datatype === "all") {
         datacollection.datasets.push({
-          label: "AC (AtCoder + Codeforces)",
+          label: "AtCoder + Codeforces",
           backgroundColor: "#62B800",
           borderColor: "#7AB833",
           data: sum_data,
@@ -175,12 +175,12 @@ const AcceptedCounter = {
       if (datatype === "each" || datatype === "all") {
         datacollection.datasets.push(
           {
-            label: "AC (AtCoder)",
+            label: "AtCoder",
             backgroundColor: "#0062B8",
             borderColor: "#337AB7",
             data: ac_data,
           }, {
-            label: "AC (Codeforces)",
+            label: "Codeforces",
             backgroundColor: "#B80062",
             borderColor: "#B8337A",
             data: cf_data,
