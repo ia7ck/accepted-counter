@@ -5,6 +5,7 @@ const IdForm = {
       ids: {
         "atcoder": "",
         "codeforces": "",
+        "aoj": "",
       },
     })
   },
@@ -21,6 +22,9 @@ const IdForm = {
       </mu-form-item>
       <mu-form-item label="Codeforces ID" label-position="left" label-width=120>
         <mu-text-field v-model="ids.codeforces"></mu-text-field>
+      </mu-form-item>
+      <mu-form-item label="AOJ ID" label-position="left" label-width=120>
+        <mu-text-field v-model="ids.aoj"></mu-text-field>
       </mu-form-item>
       <mu-form-item>
         <mu-button id="submit-button" color="primary" small type="submit">submit</mu-button>
@@ -139,6 +143,7 @@ const AcceptedCounter = {
   props: {
     ac_timeline: Array[Number],
     cf_timeline: Array[Number],
+    aoj_timeline: Array[Number],
   },
   data() {
     return ({
@@ -156,17 +161,17 @@ const AcceptedCounter = {
       this._fillData(chosen);
     },
     _fillData(datatype) {
-      let timeline = this.ac_timeline.concat(this.cf_timeline);
+      let timeline = this.ac_timeline.concat(this.cf_timeline).concat(this.aoj_timeline);
       timeline.sort();
       if (timeline.length == 0) {
         timeline.push(0);
       }
       let labels = collect_labels(timeline).map((sec) => sec_to_str(sec)).filter((val, idx, a) => (a.indexOf(val) == idx));
       let datacollection = { labels: labels, datasets: [] };
-      let [sum_data, ac_data, cf_data] = [timeline, this.ac_timeline, this.cf_timeline].map((tl) => (get_chart_data(get_acc_sum_array(tl))));
+      let [sum_data, ac_data, cf_data, aoj_data] = [timeline, this.ac_timeline, this.cf_timeline, this.aoj_timeline].map((tl) => (get_chart_data(get_acc_sum_array(tl))));
       if (datatype === "sum" || datatype === "all") {
         datacollection.datasets.push({
-          label: "AtCoder + Codeforces",
+          label: "AtCoder + Codeforces + AOJ",
           backgroundColor: "#62B800",
           borderColor: "#7AB833",
           data: sum_data,
@@ -181,9 +186,14 @@ const AcceptedCounter = {
             data: ac_data,
           }, {
             label: "Codeforces",
-            backgroundColor: "#B80062",
-            borderColor: "#B8337A",
+            backgroundColor: "#5600B8",
+            borderColor: "#7337B8",
             data: cf_data,
+          }, {
+            label: "AOJ",
+            backgroundColor: "#B85600",
+            borderColor: "#B87337",
+            data: aoj_data,
           }
         );
       }
@@ -208,6 +218,7 @@ const app = new Vue({
   data: {
     ac_timeline: [],
     cf_timeline: [],
+    aoj_timeline: [],
     loaded: false,
   },
   methods: {
@@ -219,6 +230,7 @@ const app = new Vue({
         const tls = await get_timelines(ids);
         this.ac_timeline.splice(0, this.ac_timeline.length, ...tls["atcoder"]);
         this.cf_timeline.splice(0, this.cf_timeline.length, ...tls["codeforces"]);
+        this.aoj_timeline.splice(0, this.aoj_timeline.length, ...tls["aoj"]);
         this.loaded = true;
       } catch (e) {
         console.error(e);
@@ -234,13 +246,13 @@ const app = new Vue({
     <div style="text-align: center;">
       <mu-circular-progress color="primary" id="progress" style="display: none;"></mu-circular-progress>
     </div>
-    <accepted-counter v-if="loaded" v-bind:ac_timeline="ac_timeline" v-bind:cf_timeline="cf_timeline"></accepted-counter>
+    <accepted-counter v-if="loaded" v-bind:ac_timeline="ac_timeline" v-bind:cf_timeline="cf_timeline" v-bind:aoj_timeline="aoj_timeline"></accepted-counter>
   </mu-container>
   `
 });
 
 async function get_timelines(ids) {
-  let timelines = { "atcoder": [], "codeforces": [] };
+  let timelines = { "atcoder": [], "codeforces": [], "aoj": [] };
   try { // atcoder
     if (ids["atcoder"].length > 0) {
       const response = await fetch(`https://kenkoooo.com/atcoder/atcoder-api/results?user=${ids.atcoder}`);
@@ -260,6 +272,7 @@ async function get_timelines(ids) {
   } catch (e) {
     console.error(e);
   }
+
   try { // codeforces
     if (ids["codeforces"].length > 0) {
       const response = await fetch(`https://codeforces.com/api/user.status?handle=${ids.codeforces}`);
@@ -282,6 +295,23 @@ async function get_timelines(ids) {
   } catch (e) {
     console.error(e);
   }
+
+  try { // aoj
+    if (ids["aoj"].length > 0) {
+      const response = await fetch(`https://judgedat.u-aizu.ac.jp/rating/users/${ids.aoj}/statistics`);
+      // const response = await fetch("http://localhost:4567/aoj");
+      const aoj_submissions = await response.json();
+      aoj_submissions["dailySolutions"].forEach((s) => {
+        for (let _ = 0; _ < s["value"]; _++) {
+          timelines["aoj"].push(s["date"] / 1000); // msec => sec
+        }
+      });
+      // timelines["aoj"].sort();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
   return timelines;
 }
 
