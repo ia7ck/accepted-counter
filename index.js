@@ -255,7 +255,7 @@ async function get_timelines(ids) {
   let timelines = { "atcoder": [], "codeforces": [], "aoj": [] };
   try { // atcoder
     if (ids["atcoder"].length > 0) {
-      const response = await fetch(`https://kenkoooo.com/atcoder/atcoder-api/results?user=${ids.atcoder}`);
+      const response = await fetch(`https://kenkoooo.com/atcoder/atcoder-api/results?user=${ids.atcoder}`); // https://github.com/kenkoooo/AtCoderProblems#submission-api
       // const response = await fetch("http://localhost:4567/atcoder");
       const ac_submissions = await response.json();
       ac_accepted = ac_submissions.filter((s) => (s["result"] === "AC"));
@@ -275,7 +275,7 @@ async function get_timelines(ids) {
 
   try { // codeforces
     if (ids["codeforces"].length > 0) {
-      const response = await fetch(`https://codeforces.com/api/user.status?handle=${ids.codeforces}`);
+      const response = await fetch(`https://codeforces.com/api/user.status?handle=${ids.codeforces}`); // https://codeforces.com/api/help/methods#user.status
       // const response = await fetch("http://localhost:4567/codeforces");
       const cf_submissions = await response.json();
       if (cf_submissions["status"] === "OK") {
@@ -298,7 +298,7 @@ async function get_timelines(ids) {
 
   try { // aoj
     if (ids["aoj"].length > 0) {
-      const response = await fetch(`https://judgedat.u-aizu.ac.jp/rating/users/${ids.aoj}/statistics`);
+      const response = await fetch(`https://judgedat.u-aizu.ac.jp/rating/users/${ids.aoj}/statistics`); // http://developers.u-aizu.ac.jp/api?key=judgedat%2Frating%2Fusers%2F%7Buser_id%7D%2Fstatistics_GET
       // const response = await fetch("http://localhost:4567/aoj");
       const aoj_submissions = await response.json();
       aoj_submissions["dailySolutions"].forEach((s) => {
