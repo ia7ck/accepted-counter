@@ -310,7 +310,7 @@ const Container = {
   },
   template: `
   <mu-container>
-    <h2><router-link to="/" style="color: rgba(0,0,0,.7);">Accepted Counter</router-link></h2>
+    <h2><a href="/" style="color: rgba(0,0,0,.7);">Accepted Counter</a></h2>
     <id-form v-on:id-post="request"></id-form>
     <div style="text-align: center;">
       <mu-circular-progress color="primary" id="progress" style="display: none;"></mu-circular-progress>
