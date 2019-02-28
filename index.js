@@ -6,6 +6,7 @@ const IdForm = {
         "atcoder": "",
         "codeforces": "",
         "aoj": "",
+        "yukicoder": "",
       },
     })
   },
@@ -25,6 +26,9 @@ const IdForm = {
       </mu-form-item>
       <mu-form-item label="AOJ ID" label-position="left" label-width=120>
         <mu-text-field v-model="ids.aoj"></mu-text-field>
+      </mu-form-item>
+      <mu-form-item label="yukicoder ID" label-position="left" label-width=120>
+        <mu-text-field v-model="ids.yukicoder"></mu-text-field>
       </mu-form-item>
       <mu-form-item>
         <mu-button id="submit-button" color="primary" small type="submit">submit</mu-button>
@@ -57,6 +61,7 @@ const chartOptions = {
       ticks: {
         maxTicksLimit: 8,
         suggestedMin: 0,
+        suggestedMax: 0,
       },
       gridLines: {
         drawOnChartArea: false,
@@ -81,8 +86,12 @@ const chartOptions = {
     mode: "nearest",
     position: "nearest",
     callbacks: {
-      label(tooltipItem, _) {
-        return padding_left(tooltipItem.yLabel, 4) + " AC";
+      label(tooltipItem, data) {
+        let lab = padding_left(tooltipItem.yLabel, 4) + " AC";
+        if (tooltipItem.index > 0) {
+          lab += ` (+${tooltipItem.yLabel - data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index - 1].y})`;
+        }
+        return lab;
       },
     }
   },
@@ -98,37 +107,49 @@ const chartOptions = {
   },
   animation: {
     duration: 0,
+  },
+  legend: {
+    onClick() { }
   }
 };
 
 const LineChart = {
   extends: VueChartJs.Line,
   mixins: [VueChartJs.mixins.reactiveProp],
-  props: ["options"], // ?
-  // mounted() {
-  //   this.renderChart(this.chartData, this.options);
-  // },
+  props: ["options"],
+  watch: {
+    options: {
+      handler() {
+        this.renderChart(this.chartData, this.options);
+      },
+      deep: true,
+    },
+  },
 };
 
 const ChooseDataForm = {
   data() {
     return ({
-      form: { radio: "all" },
+      form: { radio: "all", switch: false },
     });
   },
   methods: {
-    onChange() {
+    onRadioChange() {
       this.$emit("choose-data", this.form.radio);
     },
+    onSwitch() {
+      this.$emit("switch-fitness", this.form.switch);
+    }
   },
   template: `
   <mu-flex justify-content="center">
     <mu-flex justify-content="center">
       <mu-form v-bind:model="form">
         <mu-form-item>
-          <mu-radio v-model="form.radio" value="all" label="All" v-on:change="onChange"></mu-radio>
-          <mu-radio v-model="form.radio" value="sum" label="Sum" v-on:change="onChange"></mu-radio>
-          <mu-radio v-model="form.radio" value="each" label="Each" v-on:change="onChange"></mu-radio>
+          <mu-radio v-model="form.radio" value="all" label="All" v-on:change="onRadioChange"></mu-radio>
+          <mu-radio v-model="form.radio" value="sum" label="Sum" v-on:change="onRadioChange"></mu-radio>
+          <mu-radio v-model="form.radio" value="each" label="Each" v-on:change="onRadioChange"></mu-radio>
+          <mu-switch v-if="form.radio === 'each'" v-model="form.switch" label="fit" v-on:change="onSwitch"></mu-switch>
         </mu-form-item>
       </mu-form>
     </mu-flex>
@@ -144,36 +165,39 @@ const AcceptedCounter = {
     ac_timeline: Array[Number],
     cf_timeline: Array[Number],
     aoj_timeline: Array[Number],
+    yc_timeline: Array[Number],
   },
   data() {
     return ({
-      separated: true,
-      form: { radio: "all" },
       datacollection: { labels: [], datasets: [] },
       options: chartOptions,
     });
   },
   mounted() {
-    this._fillData("all");
+    this.options.scales.yAxes[0].ticks.suggestedMax = this.count_total_ac();
+    this.fillData("all");
   },
   methods: {
-    _switchData(chosen) {
-      this._fillData(chosen);
+    chooseData(chosen) {
+      this.fillData(chosen);
     },
-    _fillData(datatype) {
-      let timeline = this.ac_timeline.concat(this.cf_timeline).concat(this.aoj_timeline);
+    switchFitness(fit) {
+      this.options.scales.yAxes[0].ticks.suggestedMax = fit ? 0 : this.count_total_ac();
+    },
+    fillData(datatype) {
+      let timeline = [this.ac_timeline, this.cf_timeline, this.aoj_timeline, this.yc_timeline].reduce((acc, cur) => (acc.concat(cur)));
       timeline.sort();
       if (timeline.length == 0) {
-        timeline.push(0);
+        timeline.push(0, moment().unix());
       }
       let labels = collect_labels(timeline).map((sec) => sec_to_str(sec)).filter((val, idx, a) => (a.indexOf(val) == idx));
       let datacollection = { labels: labels, datasets: [] };
-      let [sum_data, ac_data, cf_data, aoj_data] = [timeline, this.ac_timeline, this.cf_timeline, this.aoj_timeline].map((tl) => (get_chart_data(get_acc_sum_array(tl))));
+      let [sum_data, ac_data, cf_data, aoj_data, yc_data] = [timeline, this.ac_timeline, this.cf_timeline, this.aoj_timeline, this.yc_timeline].map((tl) => (get_chart_data(get_acc_sum_array(tl))));
       if (datatype === "sum" || datatype === "all") {
         datacollection.datasets.push({
-          label: "AtCoder + Codeforces + AOJ",
-          backgroundColor: "#62B800",
-          borderColor: "#7AB833",
+          label: "AC+CF+AOJ+YC",
+          backgroundColor: "#5CB887",
+          borderColor: "#37B873",
           data: sum_data,
         });
       }
@@ -181,29 +205,36 @@ const AcceptedCounter = {
         datacollection.datasets.push(
           {
             label: "AtCoder",
-            backgroundColor: "#0062B8",
-            borderColor: "#337AB7",
+            backgroundColor: "#5C8DB8",
+            borderColor: "#819EB8",
             data: ac_data,
           }, {
             label: "Codeforces",
-            backgroundColor: "#5600B8",
-            borderColor: "#7337B8",
+            backgroundColor: "#B85C5F",
+            borderColor: "#B88182",
             data: cf_data,
           }, {
             label: "AOJ",
-            backgroundColor: "#B85600",
-            borderColor: "#B87337",
+            backgroundColor: "#B8B55C",
+            borderColor: "#B8B681",
             data: aoj_data,
+          }, {
+            label: "yukicoder",
+            backgroundColor: "#875CB8",
+            borderColor: "#9A81B8",
+            data: yc_data,
           }
         );
       }
-      this.options.scales.yAxes[0].ticks.suggestedMax = timeline.length;
-      this.datacollection = datacollection;
+      this.datacollection = Object.assign({}, this.datacollection, datacollection);
+    },
+    count_total_ac() {
+      return [this.ac_timeline, this.cf_timeline, this.aoj_timeline, this.yc_timeline].reduce((acc, cur) => (acc + cur.length), 0);
     },
   },
   template: `
-  <mu-container style="text-align: center;">
-    <choose-data-form v-on:choose-data="_switchData"></choose-data-form>
+  <mu-container>
+    <choose-data-form v-on:choose-data="chooseData" v-on:switch-fitness="switchFitness"></choose-data-form>
     <line-chart v-bind:chart-data="datacollection" v-bind:options="options"></line-chart>
   </mu-container>
   `
@@ -219,6 +250,7 @@ const app = new Vue({
     ac_timeline: [],
     cf_timeline: [],
     aoj_timeline: [],
+    yc_timeline: [],
     loaded: false,
   },
   methods: {
@@ -231,6 +263,7 @@ const app = new Vue({
         this.ac_timeline.splice(0, this.ac_timeline.length, ...tls["atcoder"]);
         this.cf_timeline.splice(0, this.cf_timeline.length, ...tls["codeforces"]);
         this.aoj_timeline.splice(0, this.aoj_timeline.length, ...tls["aoj"]);
+        this.yc_timeline.splice(0, this.yc_timeline.length, ...tls["yukicoder"]);
         this.loaded = true;
       } catch (e) {
         console.error(e);
@@ -246,13 +279,13 @@ const app = new Vue({
     <div style="text-align: center;">
       <mu-circular-progress color="primary" id="progress" style="display: none;"></mu-circular-progress>
     </div>
-    <accepted-counter v-if="loaded" v-bind:ac_timeline="ac_timeline" v-bind:cf_timeline="cf_timeline" v-bind:aoj_timeline="aoj_timeline"></accepted-counter>
+    <accepted-counter v-if="loaded" v-bind:ac_timeline="ac_timeline" v-bind:cf_timeline="cf_timeline" v-bind:aoj_timeline="aoj_timeline" v-bind:yc_timeline="yc_timeline"></accepted-counter>
   </mu-container>
   `
 });
 
 async function get_timelines(ids) {
-  let timelines = { "atcoder": [], "codeforces": [], "aoj": [] };
+  let timelines = { "atcoder": [], "codeforces": [], "aoj": [], "yukicoder": [] };
   try { // atcoder
     if (ids["atcoder"].length > 0) {
       const response = await fetch(`https://kenkoooo.com/atcoder/atcoder-api/results?user=${ids.atcoder}`); // https://github.com/kenkoooo/AtCoderProblems#submission-api
@@ -300,13 +333,27 @@ async function get_timelines(ids) {
     if (ids["aoj"].length > 0) {
       const response = await fetch(`https://judgedat.u-aizu.ac.jp/rating/users/${ids.aoj}/statistics`); // http://developers.u-aizu.ac.jp/api?key=judgedat%2Frating%2Fusers%2F%7Buser_id%7D%2Fstatistics_GET
       // const response = await fetch("http://localhost:4567/aoj");
-      const aoj_submissions = await response.json();
-      aoj_submissions["dailySolutions"].forEach((s) => {
+      const aoj_solvd = await response.json();
+      aoj_solvd["dailySolutions"].forEach((s) => {
         for (let _ = 0; _ < s["value"]; _++) {
           timelines["aoj"].push(s["date"] / 1000); // msec => sec
         }
       });
       // timelines["aoj"].sort();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
+  try { // yukicoder
+    if (ids["yukicoder"].length > 0) {
+      const response = await fetch(`https://yukicoder.me/api/v1/solved/name/${ids.yukicoder}`); // https://petstore.swagger.io/?url=https://yukicoder.me/api/swagger.yaml#/user/get_solved__param___user_
+      // const response = await fetch("http://localhost:4567/yukicoder");
+      const yukicoder_solved = await response.json();
+      yukicoder_solved.forEach((s) => {
+        timelines["yukicoder"].push(moment(s["Date"]).unix());
+      });
+      timelines["yukicoder"].sort();
     }
   } catch (e) {
     console.error(e);
