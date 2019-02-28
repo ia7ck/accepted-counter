@@ -3,15 +3,21 @@ const IdForm = {
   data() {
     return ({
       ids: {
-        "atcoder": "",
-        "codeforces": "",
-        "aoj": "",
-        "yukicoder": "",
+        "atcoder": this.$route.query.atcoder || "",
+        "codeforces": this.$route.query.codeforces || "",
+        "aoj": this.$route.query.aoj || "",
+        "yukicoder": this.$route.query.yukicoder || "",
       },
     })
   },
+  mounted() {
+    if (Object.values(this.ids).filter((id) => (id.length > 0)).length > 0) {
+      this.post();
+    }
+  },
   methods: {
     post() {
+      this.$router.push({ path: "/", query: this.ids });
       this.$emit("id-post", this.ids);
     }
   },
@@ -182,6 +188,7 @@ const AcceptedCounter = {
       this.fillData(chosen);
     },
     switchFitness(fit) {
+
       this.options.scales.yAxes[0].ticks.suggestedMax = fit ? 0 : this.count_total_ac();
     },
     fillData(datatype) {
@@ -240,18 +247,19 @@ const AcceptedCounter = {
   `
 };
 
-const app = new Vue({
-  el: "#app",
+const Container = {
   components: {
     "id-form": IdForm,
     "accepted-counter": AcceptedCounter,
   },
-  data: {
-    ac_timeline: [],
-    cf_timeline: [],
-    aoj_timeline: [],
-    yc_timeline: [],
-    loaded: false,
+  data() {
+    return ({
+      ac_timeline: [],
+      cf_timeline: [],
+      aoj_timeline: [],
+      yc_timeline: [],
+      loaded: false,
+    });
   },
   methods: {
     async request(ids) {
@@ -282,7 +290,7 @@ const app = new Vue({
     <accepted-counter v-if="loaded" v-bind:ac_timeline="ac_timeline" v-bind:cf_timeline="cf_timeline" v-bind:aoj_timeline="aoj_timeline" v-bind:yc_timeline="yc_timeline"></accepted-counter>
   </mu-container>
   `
-});
+};
 
 async function get_timelines(ids) {
   let timelines = { "atcoder": [], "codeforces": [], "aoj": [], "yukicoder": [] };
@@ -413,3 +421,7 @@ function collect_labels(orig_data) {
   labels.push(orig_data[orig_data.length - 1]);
   return labels;
 }
+
+const routes = [{ path: "/", component: Container }];
+const router = new VueRouter({ routes: routes });
+const app = new Vue({ router: router }).$mount("#app");
