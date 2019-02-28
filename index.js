@@ -115,7 +115,7 @@ const chartOptions = {
     duration: 0,
   },
   legend: {
-    onClick() { }
+    onClick() { },
   }
 };
 
@@ -181,17 +181,10 @@ const AcceptedCounter = {
   },
   mounted() {
     this.options.scales.yAxes[0].ticks.suggestedMax = this.count_total_ac();
-    this.fillData("all");
+    this.initData();
   },
   methods: {
-    chooseData(chosen) {
-      this.fillData(chosen);
-    },
-    switchFitness(fit) {
-
-      this.options.scales.yAxes[0].ticks.suggestedMax = fit ? 0 : this.count_total_ac();
-    },
-    fillData(datatype) {
+    initData() {
       let timeline = [this.ac_timeline, this.cf_timeline, this.aoj_timeline, this.yc_timeline].reduce((acc, cur) => (acc.concat(cur)));
       timeline.sort();
       if (timeline.length == 0) {
@@ -200,40 +193,75 @@ const AcceptedCounter = {
       let labels = collect_labels(timeline).map((sec) => sec_to_str(sec)).filter((val, idx, a) => (a.indexOf(val) == idx));
       let datacollection = { labels: labels, datasets: [] };
       let [sum_data, ac_data, cf_data, aoj_data, yc_data] = [timeline, this.ac_timeline, this.cf_timeline, this.aoj_timeline, this.yc_timeline].map((tl) => (get_chart_data(get_acc_sum_array(tl))));
-      if (datatype === "sum" || datatype === "all") {
-        datacollection.datasets.push({
+      datacollection.datasets.push(
+        {
           label: "AC+CF+AOJ+YC",
           backgroundColor: "#5CB887",
           borderColor: "#37B873",
           data: sum_data,
-        });
-      }
-      if (datatype === "each" || datatype === "all") {
-        datacollection.datasets.push(
-          {
-            label: "AtCoder",
-            backgroundColor: "#5C8DB8",
-            borderColor: "#819EB8",
-            data: ac_data,
-          }, {
-            label: "Codeforces",
-            backgroundColor: "#B85C5F",
-            borderColor: "#B88182",
-            data: cf_data,
-          }, {
-            label: "AOJ",
-            backgroundColor: "#B8B55C",
-            borderColor: "#B8B681",
-            data: aoj_data,
-          }, {
-            label: "yukicoder",
-            backgroundColor: "#875CB8",
-            borderColor: "#9A81B8",
-            data: yc_data,
-          }
-        );
+          hidden: null,
+        }, {
+          label: "AtCoder",
+          backgroundColor: "#5C8DB8",
+          borderColor: "#819EB8",
+          data: ac_data,
+          hidden: null,
+        }, {
+          label: "Codeforces",
+          backgroundColor: "#B85C5F",
+          borderColor: "#B88182",
+          data: cf_data,
+          hidden: null,
+        }, {
+          label: "AOJ",
+          backgroundColor: "#B8B55C",
+          borderColor: "#B8B681",
+          data: aoj_data,
+          hidden: null,
+        }, {
+          label: "yukicoder",
+          backgroundColor: "#875CB8",
+          borderColor: "#9A81B8",
+          data: yc_data,
+          hidden: null,
+        }
+      );
+      this.datacollection = Object.assign({}, this.datacollection, datacollection);
+    },
+    chooseData(chosen) {
+      let datacollection = { labels: this.datacollection.labels, datasets: [] };
+      switch (chosen) {
+        case "all":
+          datacollection.datasets = this.datacollection.datasets.map((ds) => {
+            ds["hidden"] = null;
+            return ds;
+          });
+          break;
+        case "sum":
+          datacollection.datasets = this.datacollection.datasets.map((ds) => {
+            if (ds["label"] === "AC+CF+AOJ+YC") {
+              ds["hidden"] = null;
+            } else {
+              ds["hidden"] = true;
+            }
+            return ds;
+          });
+          break;
+        case "each":
+          datacollection.datasets = this.datacollection.datasets.map((ds) => {
+            if (ds["label"] !== "AC+CF+AOJ+YC") {
+              ds["hidden"] = null;
+            } else {
+              ds["hidden"] = true;
+            }
+            return ds;
+          });
+          break;
       }
       this.datacollection = Object.assign({}, this.datacollection, datacollection);
+    },
+    switchFitness(fit) {
+      this.options.scales.yAxes[0].ticks.suggestedMax = fit ? 0 : this.count_total_ac();
     },
     count_total_ac() {
       return [this.ac_timeline, this.cf_timeline, this.aoj_timeline, this.yc_timeline].reduce((acc, cur) => (acc + cur.length), 0);
