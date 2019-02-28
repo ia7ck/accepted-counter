@@ -241,8 +241,8 @@ const AcceptedCounter = {
   },
   template: `
   <mu-container>
-    <choose-data-form v-on:choose-data="chooseData" v-on:switch-fitness="switchFitness"></choose-data-form>
     <line-chart v-bind:chart-data="datacollection" v-bind:options="options"></line-chart>
+    <choose-data-form v-on:choose-data="chooseData" v-on:switch-fitness="switchFitness"></choose-data-form>
   </mu-container>
   `
 };
