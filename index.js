@@ -292,7 +292,6 @@ const Container = {
   methods: {
     async request(ids) {
       this.loaded = false;
-      document.getElementById("submit-button").classList.add("disabled"); // ......
       document.getElementById("progress").style.display = "inline"; // ......
       try {
         const tls = await get_timelines(ids);
@@ -304,7 +303,6 @@ const Container = {
       } catch (e) {
         console.error(e);
       }
-      document.getElementById("submit-button").classList.remove("disabled");
       document.getElementById("progress").style.display = "none";
     }
   },
