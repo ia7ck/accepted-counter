@@ -10,6 +10,9 @@ const IdForm = {
       },
     })
   },
+  props: {
+    buttonDisabled: false,
+  },
   mounted() {
     if (Object.values(this.ids).filter((id) => (id.length > 0)).length > 0) {
       this.post();
@@ -25,7 +28,7 @@ const IdForm = {
   <mu-container>
     <mu-form v-bind:model="ids" v-on:submit.prevent="post" style="max-width: 460px;">
       <mu-form-item label="AtCoder ID" label-position="left" label-width=120>
-        <mu-text-field v-model="ids.atcoder"></mu-text-field>
+        <mu-text-field autofocus v-model="ids.atcoder"></mu-text-field>
       </mu-form-item>
       <mu-form-item label="Codeforces ID" label-position="left" label-width=120>
         <mu-text-field v-model="ids.codeforces"></mu-text-field>
@@ -37,7 +40,7 @@ const IdForm = {
         <mu-text-field v-model="ids.yukicoder"></mu-text-field>
       </mu-form-item>
       <mu-form-item>
-        <mu-button id="submit-button" color="primary" small type="submit">submit</mu-button>
+        <mu-button id="submit-button" color="primary" small type="submit" v-bind:class="{disabled: buttonDisabled}">submit</mu-button>
       </mu-form-item>
     </mu-form>
   </mu-container>
@@ -286,34 +289,35 @@ const Container = {
       cf_timeline: [],
       aoj_timeline: [],
       yc_timeline: [],
-      loaded: false,
+      isExistData: false,
+      loading: false,
     });
   },
   methods: {
-    async request(ids) {
-      this.loaded = false;
-      document.getElementById("progress").style.display = "inline"; // ......
-      try {
-        const tls = await get_timelines(ids);
+    request(ids) {
+      this.isExistData = false;
+      this.loading = true;
+      get_timelines(ids).then((tls) => {
         this.ac_timeline.splice(0, this.ac_timeline.length, ...tls["atcoder"]);
         this.cf_timeline.splice(0, this.cf_timeline.length, ...tls["codeforces"]);
         this.aoj_timeline.splice(0, this.aoj_timeline.length, ...tls["aoj"]);
         this.yc_timeline.splice(0, this.yc_timeline.length, ...tls["yukicoder"]);
-        this.loaded = true;
-      } catch (e) {
+        this.isExistData = true;
+      }).catch((e) => {
         console.error(e);
-      }
-      document.getElementById("progress").style.display = "none";
+      }).finally(() => {
+        this.loading = false;
+      });
     }
   },
   template: `
   <mu-container>
-    <h2><a href="/" style="color: rgba(0,0,0,.7);">Accepted Counter</a></h2>
-    <id-form v-on:id-post="request"></id-form>
-    <div style="text-align: center;">
-      <mu-circular-progress color="primary" id="progress" style="display: none;"></mu-circular-progress>
+    <h2><a tabindex="2525" href="/" style="color: rgba(0,0,0,.7);">Accepted Counter</a></h2>
+    <id-form v-on:id-post="request" v-bind:buttonDisabled="loading"></id-form>
+    <div v-if="loading" style="text-align: center;">
+      <mu-circular-progress color="primary" id="progress""></mu-circular-progress>
     </div>
-    <accepted-counter v-if="loaded" v-bind:ac_timeline="ac_timeline" v-bind:cf_timeline="cf_timeline" v-bind:aoj_timeline="aoj_timeline" v-bind:yc_timeline="yc_timeline"></accepted-counter>
+    <accepted-counter v-if="isExistData" v-bind:ac_timeline="ac_timeline" v-bind:cf_timeline="cf_timeline" v-bind:aoj_timeline="aoj_timeline" v-bind:yc_timeline="yc_timeline"></accepted-counter>
   </mu-container>
   `
 };
