@@ -312,7 +312,7 @@ const Container = {
   },
   template: `
   <mu-container>
-    <h2><a tabindex="2525" href="/" style="color: rgba(0,0,0,.7);">Accepted Counter</a></h2>
+    <h2><a tabindex="2525" href="/accepted-counter" style="color: rgba(0,0,0,.7);">Accepted Counter</a></h2>
     <id-form v-on:id-post="request" v-bind:buttonDisabled="loading"></id-form>
     <div v-if="loading" style="text-align: center;">
       <mu-circular-progress color="primary" id="progress""></mu-circular-progress>
