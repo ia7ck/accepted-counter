@@ -1,0 +1,63 @@
+{
+  "name": "accepted-counter",
+  "version": "1.0.0",
+  "private": true,
+  "author": {
+    "name": "ia7ck",
+    "email": "23146842+ia7ck@users.noreply.github.com"
+  },
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "main": "main.js",
+  "dependencies": {
+    "@vue/cli": "^4.5.10",
+    "apexcharts": "^3.23.1",
+    "core-js": "^3.6.5",
+    "date-fns": "^2.16.1",
+    "vue": "^2.6.11",
+    "vue-apexcharts": "^1.6.0",
+    "vue-router": "^3.4.9"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-eslint": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^6.2.2",
+    "vue-template-compiler": "^2.6.11"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "babel-eslint"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "_id": "accepted-counter@1.0.0",
+  "bugs": {
+    "url": "https://github.com/ia7ck/accepted-counter/issues"
+  },
+  "homepage": "https://github.com/ia7ck/accepted-counter#readme",
+  "license": "MIT",
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ia7ck/accepted-counter.git"
+  }
+}
